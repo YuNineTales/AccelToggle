@@ -1,12 +1,12 @@
 // AccelToggle — 메뉴 막대에서 브라우저 하드웨어 가속을 켜고 끄는 앱
 // 왼쪽 클릭: 선택한 브라우저 가속 토글 / 오른쪽 클릭: 메뉴
 // 동작: 브라우저 정상 종료 → "Local State"의 hardware_acceleration_mode.enabled 변경 → 재실행
-// 크로미움 계열 브라우저(Chrome, Edge, Brave, Vivaldi 등)는 같은 설정 키를 써서 공통으로 동작함
+// 크로미움 계열 브라우저(Chrome, Edge, Brave, Vivaldi 등)는 같은 설정 키를 사용하므로 공통으로 동작합니다
 
 import AppKit
 import ServiceManagement
 
-// MARK: - 지원 브라우저 목록 (여기에 추가하면 메뉴에 나타남)
+// MARK: - 지원 브라우저 목록 (여기에 추가하면 메뉴에 표시됩니다)
 
 struct Browser {
     let name: String
@@ -44,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var installedBrowsers: [Browser] { allBrowsers.filter { $0.isInstalled } }
 
-    /// 현재 대상 브라우저 (메뉴에서 선택, 저장됨)
+    /// 현재 대상 브라우저 (메뉴에서 선택하며, 선택값은 저장됩니다)
     private var target: Browser? {
         let saved = UserDefaults.standard.string(forKey: "targetBundleID")
         let installed = installedBrowsers
@@ -88,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let mode = root["hardware_acceleration_mode"] as? [String: Any],
               let enabled = mode["enabled"] as? Bool
-        else { return true } // 값이 없으면 기본값(켜짐)
+        else { return true } // 값이 없으면 기본값(켜짐)으로 간주합니다
         return enabled
     }
 
@@ -97,11 +97,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let data = try? Data(contentsOf: b.localStateURL),
               var root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
-            showAlert("\(b.name) 설정 파일(Local State)을 못 읽었어.\n브라우저를 한 번 실행했다 끈 뒤 다시 해봐.")
+            showAlert("\(b.name) 설정 파일(Local State)을 읽을 수 없습니다.\n전체 디스크 접근 권한을 확인하거나, 브라우저를 한 번 실행했다가 종료한 뒤 다시 시도하십시오.")
             return false
         }
 
-        // 처음 한 번만 원본 백업
+        // 처음 한 번만 원본을 백업합니다
         let backup = b.localStateURL.deletingLastPathComponent()
             .appendingPathComponent("Local State.acceltoggle-backup")
         if !fm.fileExists(atPath: backup.path) {
@@ -117,7 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try out.write(to: b.localStateURL, options: .atomic)
             return true
         } catch {
-            showAlert("설정 파일 저장 실패: \(error.localizedDescription)")
+            showAlert("설정 파일을 저장하지 못했습니다: \(error.localizedDescription)")
             return false
         }
     }
@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !busy else { return }
         let apps = running(b)
 
-        // 꺼져 있으면 파일만 바꾸면 끝 (다음 실행부터 적용)
+        // 브라우저가 꺼져 있으면 파일만 변경합니다 (다음 실행부터 적용)
         if apps.isEmpty {
             _ = writeAcceleration(b, enabled)
             refreshIcon()
@@ -141,17 +141,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         busy = true
         refreshIcon()
-        apps.forEach { $0.terminate() } // Cmd+Q와 같은 정상 종료
+        apps.forEach { $0.terminate() } // Cmd+Q와 같은 정상 종료입니다
 
         waitForExit(b, deadline: Date().addingTimeInterval(15)) { [weak self] exited in
             guard let self = self else { return }
             guard exited else {
                 self.busy = false
                 self.refreshIcon()
-                self.showAlert("\(b.name)이(가) 안 꺼졌어. 종료 확인 창이 떠 있는지 봐줘.")
+                self.showAlert("\(b.name)이(가) 종료되지 않았습니다. 종료 확인 창이 표시되어 있는지 확인하십시오.")
                 return
             }
-            // 브라우저가 종료하면서 Local State를 쓰니까, 완전히 끝난 뒤 살짝 기다렸다 수정
+            // 브라우저가 종료하면서 Local State를 기록하므로, 완전히 종료된 뒤 잠시 기다렸다가 수정합니다
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                 if self.writeAcceleration(b, enabled) {
                     self.launch(b)
@@ -172,11 +172,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func launch(_ b: Browser) {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: b.bundleID) else {
-            showAlert("\(b.name)을(를) 못 찾았어.")
+            showAlert("\(b.name)을(를) 찾을 수 없습니다.")
             return
         }
         let config = NSWorkspace.OpenConfiguration()
-        // 종료 직전에 열려 있던 탭/창을 그대로 복원 (크롬 "시작 시" 설정과 상관없이 적용됨)
+        // 종료 직전에 열려 있던 탭과 창을 복원합니다 (크롬의 "시작 시" 설정과 관계없이 적용됩니다)
         config.arguments = ["--restore-last-session"]
         NSWorkspace.shared.openApplication(at: url, configuration: config)
     }
@@ -191,7 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func screensChanged() {
-        // 화면 변경 이벤트가 여러 번 튀어서 1.5초 모아서 처리
+        // 화면 변경 이벤트가 여러 번 발생하므로 1.5초 동안 모아서 한 번에 처리합니다
         screenWorkItem?.cancel()
         let item = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
@@ -199,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard now != self.lastSidecar else { return }
             self.lastSidecar = now
             if self.autoSidecar, let b = self.target {
-                self.setAcceleration(b, !now) // Sidecar 연결 → 가속 끄기
+                self.setAcceleration(b, !now) // Sidecar가 연결되면 가속을 끕니다
             }
         }
         screenWorkItem = item
@@ -221,12 +221,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if busy {
                 symbol = "arrow.triangle.2.circlepath"; tip = "\(b.name) 재시작 중…"
             } else if readAcceleration(b) {
-                symbol = "bolt.fill"; tip = "\(b.name) 하드웨어 가속 켜짐 (클릭하면 끔)"
+                symbol = "bolt.fill"; tip = "\(b.name) 하드웨어 가속 켜짐 (클릭하면 끕니다)"
             } else {
-                symbol = "film"; tip = "\(b.name) 하드웨어 가속 꺼짐 / DRM 시청 모드 (클릭하면 켬)"
+                symbol = "film"; tip = "\(b.name) 하드웨어 가속 꺼짐 / DRM 시청 모드 (클릭하면 켭니다)"
             }
         } else {
-            symbol = "questionmark.circle"; tip = "지원하는 브라우저가 설치돼 있지 않음"
+            symbol = "questionmark.circle"; tip = "지원하는 브라우저가 설치되어 있지 않습니다"
         }
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: tip)
         image?.isTemplate = true
@@ -301,7 +301,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
-        statusItem.menu = nil // 다시 왼쪽 클릭이 토글로 동작하게
+        statusItem.menu = nil // 왼쪽 클릭이 다시 토글로 동작하도록 메뉴를 해제합니다
     }
 
     @objc private func toggleFromMenu() {
@@ -325,7 +325,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            showAlert("로그인 항목 설정 실패: \(error.localizedDescription)\n앱을 '응용 프로그램' 폴더에 넣고 다시 해봐.")
+            showAlert("로그인 항목을 설정하지 못했습니다: \(error.localizedDescription)\n앱을 '응용 프로그램' 폴더로 옮긴 뒤 다시 시도하십시오.")
         }
     }
 
@@ -341,5 +341,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
-app.setActivationPolicy(.accessory) // Dock 아이콘 없이 메뉴 막대에만
+app.setActivationPolicy(.accessory) // Dock 아이콘 없이 메뉴 막대에만 표시합니다
 app.run()

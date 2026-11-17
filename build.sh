@@ -26,10 +26,10 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
 </plist>
 EOF
 
-# 서명: 인증서가 있으면 그걸로 서명해서 다시 빌드해도 macOS 권한(전체 디스크 접근)이 유지되게 함
-#  - SIGN_IDENTITY 환경변수로 직접 지정 가능 (인증서 이름 또는 SHA-1 해시)
-#  - 없으면 키체인에서 "Apple Development" 인증서를 자동으로 찾음
-#  - 그것도 없으면 ad-hoc 서명 (다시 빌드할 때마다 권한을 다시 줘야 함)
+# 서명: 인증서가 있으면 해당 인증서로 서명하여, 다시 빌드해도 macOS 권한(전체 디스크 접근)이 유지되도록 합니다
+#  - SIGN_IDENTITY 환경변수로 직접 지정할 수 있습니다 (인증서 이름 또는 SHA-1 해시)
+#  - 지정하지 않으면 키체인에서 "Apple Development" 인증서를 자동으로 찾습니다
+#  - 인증서가 없으면 ad-hoc 서명을 사용합니다 (다시 빌드할 때마다 권한을 다시 부여해야 합니다)
 IDENTITY="${SIGN_IDENTITY:-}"
 if [ -z "$IDENTITY" ]; then
     IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null \
@@ -38,11 +38,11 @@ fi
 
 if [ -n "$IDENTITY" ]; then
     codesign --force --sign "$IDENTITY" "$APP"
-    echo "🔏 인증서로 서명함 (다시 빌드해도 권한 유지)"
+    echo "🔏 인증서로 서명했습니다 (다시 빌드해도 권한이 유지됩니다)"
 else
     codesign --force --sign - "$APP"
-    echo "⚠️  인증서가 없어 ad-hoc 서명함 (다시 빌드하면 전체 디스크 접근 권한을 다시 줘야 해)"
+    echo "⚠️  인증서가 없어 ad-hoc 서명을 사용했습니다 (다시 빌드하면 전체 디스크 접근 권한을 다시 부여해야 합니다)"
 fi
 
-echo "✅ 빌드 완료: $(pwd)/$APP"
-echo "   응용 프로그램 폴더로 옮기려면: mv \"$APP\" /Applications/"
+echo "✅ 빌드가 완료되었습니다: $(pwd)/$APP"
+echo "   응용 프로그램 폴더로 옮기려면 다음 명령을 실행하십시오: mv \"$APP\" /Applications/"
