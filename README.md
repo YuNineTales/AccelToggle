@@ -13,10 +13,37 @@
 
 ## 요구 사항
 
-- macOS 13 이상
-- Xcode Command Line Tools (`xcode-select --install`)
+- macOS 13 이상 (Apple Silicon, Intel 모두 지원)
+- 직접 빌드하는 경우에만: Xcode Command Line Tools (`xcode-select --install`)
 
-## 빌드 및 설치
+## 설치 (빌드된 앱 내려받기)
+
+개발 도구 없이 바로 사용하려면 이 방법을 사용하십시오.
+
+1. [Releases](https://github.com/YuNineTales/AccelToggle/releases/latest) 페이지에서 `AccelToggle-<버전>.zip`을 내려받습니다.
+2. 압축을 풀고 `AccelToggle.app`을 **응용 프로그램** 폴더로 옮깁니다.
+3. `AccelToggle.app`을 실행합니다.
+4. 아래 **전체 디스크 접근 권한 (필수)** 항목에 따라 권한을 부여합니다.
+
+### 처음 실행할 때 "열 수 없습니다" 경고가 표시되는 경우
+
+이 앱은 Apple의 공증(notarization)을 받지 않았기 때문에, 인터넷에서 내려받은 경우 macOS가 처음 실행을 차단합니다.
+
+1. 경고 창을 닫습니다.
+2. **시스템 설정 → 개인정보 보호 및 보안**의 아래쪽에서 AccelToggle 항목의 **그래도 열기**를 누릅니다.
+3. 다시 표시되는 창에서 **열기**를 누릅니다.
+
+macOS 버전에 따라 위 버튼이 보이지 않거나 "손상되었기 때문에 열 수 없습니다"라고 표시될 수 있습니다. 이 경우 터미널에서 다음 명령을 실행한 뒤 다시 열어 보십시오.
+
+```bash
+xattr -dr com.apple.quarantine /Applications/AccelToggle.app
+```
+
+### 새 버전으로 업데이트할 때
+
+배포용 앱은 ad-hoc 서명이므로, 새 버전으로 교체하면 macOS가 다른 앱으로 인식합니다. 업데이트 후에는 위의 "그래도 열기" 과정과 전체 디스크 접근 권한 부여(목록에서 `−`로 제거 후 다시 추가)를 한 번 더 진행하십시오.
+
+## 직접 빌드 및 설치
 
 ```bash
 ./build.sh
@@ -41,6 +68,8 @@ open /Applications/AccelToggle.app
 3. 메뉴 막대에서 AccelToggle을 종료한 후 다시 실행합니다.
 
 > **서명과 권한 유지**: `build.sh`는 키체인에 `Apple Development` 인증서가 있으면 해당 인증서로 서명합니다. 이 경우 다시 빌드해도 권한이 유지됩니다. 다른 인증서를 사용하려면 `SIGN_IDENTITY="인증서 이름" ./build.sh`와 같이 지정하십시오.
+>
+> 배포용 zip은 `./build.sh --release`로 만듭니다. 이때는 인증서에 포함된 개인정보(이름·이메일·팀 ID)가 앱에 들어가지 않도록 항상 ad-hoc으로 서명합니다. 버전은 `VERSION=1.0.1 ./build.sh --release`와 같이 지정합니다.
 >
 > 인증서가 없으면 ad-hoc 서명으로 빌드됩니다. 이 경우 다시 빌드할 때마다 macOS가 다른 앱으로 인식하여 "설정 파일(Local State)을 읽을 수 없습니다" 알림이 표시됩니다. 이때는 목록에서 AccelToggle을 `−` 버튼으로 제거한 뒤 다시 추가하십시오. 서명 방식이 바뀐 직후에도 한 번은 이와 같이 다시 추가해야 합니다.
 
