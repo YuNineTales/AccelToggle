@@ -18,16 +18,10 @@ APP="AccelToggle.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 
-# Apple Silicon과 Intel 모두에서 실행되도록 유니버설 바이너리로 빌드합니다.
+# Apple Silicon(arm64) 전용으로 빌드합니다.
 # -target을 지정하지 않으면 빌드한 맥의 macOS 버전이 최소 버전이 되므로, 반드시 지정합니다.
-TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
-for ARCH in arm64 x86_64; do
-    swiftc -O -swift-version 5 -target "$ARCH-apple-macos$MIN_MACOS" \
-        main.swift -o "$TMP/AccelToggle-$ARCH"
-done
-lipo -create "$TMP/AccelToggle-arm64" "$TMP/AccelToggle-x86_64" \
-    -output "$APP/Contents/MacOS/AccelToggle"
+swiftc -O -swift-version 5 -target "arm64-apple-macos$MIN_MACOS" \
+    main.swift -o "$APP/Contents/MacOS/AccelToggle"
 
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -70,7 +64,7 @@ else
     fi
 fi
 
-echo "✅ 빌드가 완료되었습니다: $(pwd)/$APP (버전 $VERSION, macOS $MIN_MACOS 이상, Apple Silicon·Intel)"
+echo "✅ 빌드가 완료되었습니다: $(pwd)/$APP (버전 $VERSION, macOS $MIN_MACOS 이상, Apple Silicon)"
 
 if [ "$RELEASE" = 1 ]; then
     ZIP="AccelToggle-$VERSION.zip"

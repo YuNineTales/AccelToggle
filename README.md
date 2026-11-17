@@ -13,7 +13,8 @@
 
 ## 요구 사항
 
-- macOS 13 이상 (Apple Silicon, Intel 모두 지원)
+- macOS 13 이상
+- Apple Silicon(M1 이상) Mac 전용 (Intel Mac은 지원하지 않습니다)
 - 직접 빌드하는 경우에만: Xcode Command Line Tools (`xcode-select --install`)
 
 ## 설치 (빌드된 앱 내려받기)
